@@ -36,7 +36,7 @@
               </el-table-column>
               <el-table-column prop="is_active" label="状态" width="75">
                 <template slot-scope="scope">
-                  <el-tag type="success">标签</el-tag>
+                  <el-tag type="success">{{scope.row.is_active}}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="250">
@@ -69,7 +69,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="手机" prop="phone">
-          <el-input type="text" v-model="addForm.phone" auto-complete="off"></el-input>
+          <el-input type="text" v-model.number="addForm.phone" auto-complete="off"></el-input>
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input type="email" v-model="addForm.email" auto-complete="off">
@@ -79,7 +79,7 @@
           <el-switch v-model="addForm.is_active"></el-switch>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary">提交</el-button>
+          <el-button type="primary" @click="submitForm('addForm')">提交</el-button>
           <el-button @click="resetForm('addForm')">取消</el-button>
         </el-form-item>
       </el-form>
@@ -90,6 +90,16 @@
   export default {
     name:"Home",
     data(){
+        //自定义的验证规则
+        var checkPass = (rule,value,callback)=>{
+            if(value == ''){
+                callback(new Error('确认密码不能为空'));
+            }else if(value !== this.addForm.password){
+                callback(new Error('两次密码不一致'));
+            }else{
+                callback();
+            }
+        };
         return {
             //用于收集新增用户的对象
             addForm:{
@@ -122,10 +132,44 @@
                 create_time:'2017年11月11号',
                 is_active:'激活'
               }
-            ]
+            ],
+            addRules:{
+                username:[
+                  {required:true,message:'请输入用户名',tigger:'blur'},
+                  {min:3,max:16,message:'请输入合法的用户名',tigger:'blur'}
+                ],
+                name:[
+                  {required:true,message:'请输入姓名',tigger:'blur'}
+                ],
+                password:[
+                  {required:true,message:'请输入密码',tigger:'blur'},
+                  {min:6,max:12,message:'密码长度不合法',tigger:'blur'}
+                ],
+                repeat_password:[
+                  {validator:checkPass,tigger:'blur'}
+                ],
+                phone:[
+                  {type:'number',required:true,message:'必须是数字类型',tigger:
+                  'blur'}
+                ],
+                email:[
+                  {type:'email',required:true,message:'必须是合法邮箱格式',tigger:'blur'}
+                ]
+            }
         }
     },
     methods:{
+        //表单提交
+        submitForm:function(formName){
+            this.$refs[formName].validate((valid)=>{
+                if(valid){
+                  //提交
+
+                }else{
+                  return false
+                }
+            })
+        },
         resetForm:function(formName){
             //将弹出框关闭
             this.addDialog = false;
