@@ -15,28 +15,30 @@
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-table :data="result" tooltip-effect="dark" style="width:100%">
-              <el-table-column type="selection" width="55" sorttable>
+            <el-table :data="userList" tooltip-effect="dark" style="width:100%" :default-sort="{prop:'create_time',order:'descending'}">
+              <el-table-column type="selection" width="55">
 
               </el-table-column>
-              <el-table-column prop="username" width="100" label="用户名" sorttable>
+              <el-table-column prop="username" width="100" label="用户名">
 
               </el-table-column>
-              <el-table-column prop="name" width="80" label="姓名" sorttable>
+              <el-table-column prop="name" width="80" label="姓名" sortable>
 
               </el-table-column>
-              <el-table-column prop="phone" label="手机" sorttable>
+              <el-table-column prop="phone" label="手机">
 
               </el-table-column>
-              <el-table-column prop="email" label="邮箱" sorttable>
+              <el-table-column prop="email" label="邮箱">
 
               </el-table-column>
-              <el-table-column prop="create_time" label="注册日期" sorttable>
+              <el-table-column prop="create_time" label="注册日期" sortable>
 
               </el-table-column>
               <el-table-column prop="is_active" label="状态" width="75">
                 <template slot-scope="scope">
-                  <el-tag type="success">{{scope.row.is_active}}</el-tag>
+                  <el-tag :type="scope.row.is_active==true?'success':'danger'">
+                    {{scope.row.is_active|formatter}}
+                  </el-tag>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="250">
@@ -48,9 +50,17 @@
             </el-table>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="24">
+            <div class="block">
+              <el-pagination layout="prev,pager,next" :total="total" :page-size="5" @current-change="pageChange">
+              </el-pagination>
+            </div>
+          </el-col>
+        </el-row>
       </el-main>
     </el-container>
-    <el-dialog title="添加新用户" :visible.sync="addDialog">
+    <el-dialog title="添加新用户" :visible.sync="addDialog" @close="resetForm('addForm')">
       <el-form :model="addForm" :rules="addRules" ref="addForm" label-width="100px">
         <el-form-item label="用户名" prop="username">
           <el-input type="text" v-model="addForm.username" auto-complete="off">
@@ -87,8 +97,13 @@
   </div>
 </template>
 <script>
+  import axios from 'axios'
   export default {
     name:"Home",
+    //组件渲染完毕后调用getUsers,来获取所有的用户列表
+    mounted:function(){
+        this.getUsers()
+    },
     data(){
         //自定义的验证规则
         var checkPass = (rule,value,callback)=>{
@@ -115,24 +130,7 @@
             addDialog:false,
             //编辑的对话框
             editDialog:false,
-            result:[
-              {
-                username:'zhangsan',
-                name:'张三',
-                phone:'110',
-                email:'110@qq.com',
-                create_time:'2017年11月11号',
-                is_active:'激活'
-              },
-              {
-                username:'lisi',
-                name:'李四',
-                phone:'110',
-                email:'110@qq.com',
-                create_time:'2017年11月11号',
-                is_active:'激活'
-              }
-            ],
+            userList:[],
             addRules:{
                 username:[
                   {required:true,message:'请输入用户名',tigger:'blur'},
@@ -155,7 +153,8 @@
                 email:[
                   {type:'email',required:true,message:'必须是合法邮箱格式',tigger:'blur'}
                 ]
-            }
+            },
+            total:0
         }
     },
     methods:{
@@ -164,7 +163,22 @@
             this.$refs[formName].validate((valid)=>{
                 if(valid){
                   //提交
-
+                  axios.post('/users/create',this.addForm)
+                    .then(response=>{
+                        var res = response.data;
+                        if(res.status == '0'){
+                            //显示成功的消息提示
+                            this.$message.success('新增用户成功');
+                            this.resetForm('addForm');
+                            //重新获取下最新数据
+                            this.getUsers();
+                        }else{
+                            //返回了错误的提示消息的时候
+                            this.$message.error(res.message);
+                        }
+                    }).catch(err=>{
+                        console.log(err);
+                  })
                 }else{
                   return false
                 }
@@ -175,6 +189,24 @@
             this.addDialog = false;
             //将弹出框里面的内容清空
             this.$refs[formName].resetFields();
+        },
+        getUsers:function(page){
+            axios.get('/users/getUsers',{
+                params:{
+                    page:page || 1,
+                    pageSize:5
+                }
+            })
+              .then(response=>{
+                  var res = response.data;
+                  this.userList = res.userList;
+                  this.total = res.count;
+              }).catch(err=>{
+                  console.log(err);
+            })
+        },
+        pageChange:function(value){
+            this.getUsers(value);
         }
     }
   }
@@ -194,5 +226,9 @@
   }
   .margin40 {
     margin-top:40px;
+  }
+  .block {
+    margin-top:20px;
+    float:right;
   }
 </style>
