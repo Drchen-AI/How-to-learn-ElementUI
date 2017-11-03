@@ -60,4 +60,52 @@ router.get('/getUsers',function(req,res,next){
     })
   })
 })
+//修改用户
+router.post('/updateUser',function(req,res,next){
+    User.findOne({'_id':req.body._id}).then(user=>{
+        user.name = req.body.name;
+        user.phone = req.body.phone;
+        user.email = req.body.email;
+        user.is_active = req.body.is_active;
+        user.save().then(data=> {
+            return res.json({
+                status:'0',
+                message:'success'
+            })
+        }).catch(err=>{
+            return res.json({
+                status:'1',
+                message:err
+            });
+        })
+    })
+
+})
+router.post('/remove',function (req, res, next) {
+    var _id = req.body._id;
+    User.remove({'_id':_id}).then(data=>{
+        return res.json({
+            status:'0',
+            message:'success'
+        })
+    }).catch(err=>{
+        return res.json({
+            status:'1',
+            message:err
+        })
+    })
+})
+router.post('/deletes',function (req,res,next){
+    let Data = req.body
+    Data.forEach((data)=>{
+        User.remove({'_id':data._id}).then(()=>{
+            res.json({
+                status: '0',
+            })
+        })
+    })
+})
+
+
+
 module.exports = router;
