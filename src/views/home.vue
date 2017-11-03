@@ -9,13 +9,13 @@
           <el-col :span="20" :offset="1">
             <div class="fr margin40">
               <el-button size="mini" type="primary" icon="el-icon-plus" @click="addDialog = true">添加</el-button>
-              <el-button size="mini" type="danger" icon="el-icon-delete">删除</el-button>
+              <el-button size="mini" type="danger" icon="el-icon-delete" @click="deletesButton">删除</el-button>
             </div>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="24">
-            <el-table :data="userList" tooltip-effect="dark" style="width:100%" :default-sort="{prop:'create_time',order:'descending'}">
+            <el-table :data="userList" tooltip-effect="dark" style="width:100%" :default-sort="{prop:'create_time',order:'descending'}" @selection-change="selectionButton">
               <el-table-column type="selection" width="55">
 
               </el-table-column>
@@ -185,7 +185,8 @@
                   {type:'email',required:true,message:'必须是合法邮箱格式',tigger:'blur'}
                 ]
             },
-            total:0
+            total:0,
+            multipleSelection:[]
         }
     },
     methods:{
@@ -281,6 +282,31 @@
           }).catch(() => {
             this.$message.info('已取消删除');
           });
+        },
+        selectionButton:function (val) {
+          this.multipleSelection= val
+        },
+        deletesButton:function(){
+          this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            axios.post('/users/deletes', this.multipleSelection).then(data=>{
+              if (data.data.status == '0') {
+                this.$message({
+                  type: 'success',
+                  message: '删除成功!'
+                });
+                this.getUsers()
+              }
+            })
+          }).catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消删除'
+            });
+          })
         }
     }
   }
